@@ -15,14 +15,14 @@ A JavaScript-based offline digital library application with local server capabil
 
 - **Backend**: Node.js with Express
 - **Frontend**: React with Bootstrap
-- **Database**: MongoDB
+- **Database**: MySQL with Sequelize ORM
 - **Authentication**: JSON Web Tokens (JWT)
 - **File Storage**: Local file system
 
 ## Requirements
 
 - Node.js (v14+)
-- MongoDB (v4+)
+- MySQL (v5.7+)
 - npm or yarn
 
 ## Installation
@@ -35,25 +35,41 @@ cd Offline-Digital-Library-Desa-Wiyata-Tech
 git checkout js
 ```
 
-### 2. Install server dependencies
+### 2. Create MySQL Database
+
+```sql
+CREATE DATABASE digital_library;
+```
+
+### 3. Install server dependencies
 
 ```
 cd digitallibrary/server
 npm install
 ```
 
-### 3. Set up environment variables
+### 4. Set up environment variables
 
 Create a `.env` file in the `server` directory with the following content:
 
 ```
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/digitalLibrary
+NODE_ENV=development
+
+# MySQL Database Configuration
+DB_HOST=localhost
+DB_USER=your_mysql_username
+DB_PASSWORD=your_mysql_password
+DB_NAME=digital_library
+
+# Security
 JWT_SECRET=your_secret_key_here
+
+# File Storage
 UPLOAD_DIR=uploads
 ```
 
-### 4. Install client dependencies
+### 5. Install client dependencies
 
 ```
 cd ../client
@@ -62,18 +78,14 @@ npm install
 
 ## Running the Application
 
-### 1. Start MongoDB service
-
-Make sure MongoDB is running on your machine.
-
-### 2. Start the server
+### 1. Start the server
 
 ```
 cd ../server
 npm run dev
 ```
 
-### 3. Start the client
+### 2. Start the client
 
 ```
 cd ../client
@@ -87,15 +99,15 @@ The application should now be running at `http://localhost:3000`
 Once the server is running, other devices on the same network can access the library by:
 
 1. Finding the IP address of the server machine
-2. Accessing `http://<server-ip>:5000` from any browser
+2. Accessing `http://<server-ip>:3000` from any browser
 
 ## Admin Account
 
 To create an admin account, register a new user, then update the user role in the database:
 
-```javascript
-// In MongoDB shell or using a tool like MongoDB Compass
-db.users.updateOne({ username: "admin_username" }, { $set: { role: "admin" } })
+```sql
+-- Using MySQL command line or a tool like MySQL Workbench
+UPDATE Users SET role = 'admin' WHERE username = 'admin_username';
 ```
 
 ## License

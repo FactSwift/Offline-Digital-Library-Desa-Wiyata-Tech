@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
-const User = require('../models/User');
+const { User } = require('../models');
+const { Op } = require('sequelize');
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'offline_digital_library_secret';
@@ -17,22 +18,23 @@ exports.register = async (req, res) => {
 
   try {
     // Check if user already exists
-    let user = await User.findOne({ $or: [{ email }, { username }] });
+    const existingUser = await User.findOne({ 
+      where: {
+        [Op.or]: [{ email }, { username }]
+      }
+    });
 
-    if (user) {
+    if (existingUser) {
       return res.status(400).json({ msg: 'User already exists' });
     }
 
     // Create new user
-    user = new User({
+    const user = await User.create({
       username,
       email,
       password,
       role: role || 'user'
     });
-
-    // Save user to database
-    await user.save();
 
     // Create and return JWT token
     const payload = {
@@ -69,7 +71,7 @@ exports.login = async (req, res) => {
 
   try {
     // Check if user exists
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ where: { username } });
 
     if (!user) {
       return res.status(400).json({ msg: 'Invalid credentials' });
@@ -116,7 +118,10 @@ exports.login = async (req, res) => {
 // Get authenticated user data
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ['password'] }
+    });
+    
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
     }

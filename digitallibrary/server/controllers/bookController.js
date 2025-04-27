@@ -1,4 +1,4 @@
-const Book = require('../models/Book');
+const { Book, User } = require('../models');
 const fs = require('fs');
 const path = require('path');
 const { validationResult } = require('express-validator');
@@ -6,7 +6,14 @@ const { validationResult } = require('express-validator');
 // Get all books
 exports.getBooks = async (req, res) => {
   try {
-    const books = await Book.find().sort({ uploadDate: -1 });
+    const books = await Book.findAll({
+      order: [['uploadDate', 'DESC']],
+      include: [{
+        model: User,
+        as: 'uploader',
+        attributes: ['id', 'username']
+      }]
+    });
     res.json(books);
   } catch (err) {
     console.error(err.message);
@@ -17,7 +24,13 @@ exports.getBooks = async (req, res) => {
 // Get book by ID
 exports.getBook = async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findByPk(req.params.id, {
+      include: [{
+        model: User,
+        as: 'uploader',
+        attributes: ['id', 'username']
+      }]
+    });
     
     if (!book) {
       return res.status(404).json({ msg: 'Book not found' });
@@ -26,9 +39,6 @@ exports.getBook = async (req, res) => {
     res.json(book);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'Book not found' });
-    }
     res.status(500).send('Server Error');
   }
 };
@@ -61,8 +71,8 @@ exports.addBook = async (req, res) => {
     const pdfFileName = `${Date.now()}-${pdfFile.name.replace(/\s+/g, '_')}`;
     const pdfPath = path.join(__dirname, '../uploads', pdfFileName);
     
-    // Create new book
-    const newBook = new Book({
+    // Create new book data
+    const newBookData = {
       title,
       author,
       description,
@@ -70,10 +80,10 @@ exports.addBook = async (req, res) => {
       filePath: `/uploads/${pdfFileName}`,
       uploadedBy: req.user.id,
       ISBN,
-      pageCount,
+      pageCount: pageCount ? parseInt(pageCount) : null,
       publisher,
-      publicationYear
-    });
+      publicationYear: publicationYear ? parseInt(publicationYear) : null
+    };
 
     // Handle cover image if provided
     if (coverImage) {
@@ -92,7 +102,7 @@ exports.addBook = async (req, res) => {
         }
       });
 
-      newBook.coverImage = `/uploads/${coverFileName}`;
+      newBookData.coverImage = `/uploads/${coverFileName}`;
     }
 
     // Save PDF file
@@ -103,7 +113,7 @@ exports.addBook = async (req, res) => {
       }
 
       // Save book to database
-      const book = await newBook.save();
+      const book = await Book.create(newBookData);
       res.json(book);
     });
   } catch (err) {
@@ -128,12 +138,12 @@ exports.updateBook = async (req, res) => {
   if (description) bookFields.description = description;
   if (category) bookFields.category = category;
   if (ISBN) bookFields.ISBN = ISBN;
-  if (pageCount) bookFields.pageCount = pageCount;
+  if (pageCount) bookFields.pageCount = parseInt(pageCount);
   if (publisher) bookFields.publisher = publisher;
-  if (publicationYear) bookFields.publicationYear = publicationYear;
+  if (publicationYear) bookFields.publicationYear = parseInt(publicationYear);
 
   try {
-    let book = await Book.findById(req.params.id);
+    let book = await Book.findByPk(req.params.id);
 
     if (!book) {
       return res.status(404).json({ msg: 'Book not found' });
@@ -206,18 +216,13 @@ exports.updateBook = async (req, res) => {
     }
 
     // Update book
-    book = await Book.findByIdAndUpdate(
-      req.params.id,
-      { $set: bookFields },
-      { new: true }
-    );
-
-    res.json(book);
+    await book.update(bookFields);
+    
+    // Get the updated book
+    const updatedBook = await Book.findByPk(req.params.id);
+    res.json(updatedBook);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'Book not found' });
-    }
     res.status(500).send('Server Error');
   }
 };
@@ -225,7 +230,7 @@ exports.updateBook = async (req, res) => {
 // Delete book
 exports.deleteBook = async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findByPk(req.params.id);
 
     if (!book) {
       return res.status(404).json({ msg: 'Book not found' });
@@ -253,14 +258,11 @@ exports.deleteBook = async (req, res) => {
     }
 
     // Remove book from database
-    await book.remove();
+    await book.destroy();
 
     res.json({ msg: 'Book removed' });
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'Book not found' });
-    }
     res.status(500).send('Server Error');
   }
 }; 

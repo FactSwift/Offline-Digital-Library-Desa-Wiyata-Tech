@@ -1,10 +1,12 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const fileUpload = require('express-fileupload');
 require('dotenv').config();
+
+// Import database and models
+const { sequelize, syncDatabase } = require('./models');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -49,15 +51,19 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/digitalLibrary', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+// Sync database and start server
+const startServer = async () => {
+  try {
+    // Sync database with models (set to false in production)
+    await syncDatabase(process.env.NODE_ENV === 'development');
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+  }
+};
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+startServer(); 

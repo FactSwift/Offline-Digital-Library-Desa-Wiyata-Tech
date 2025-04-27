@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const { User } = require('../models');
 const auth = require('../middleware/auth');
 
 // @route   GET api/users
@@ -8,7 +8,9 @@ const auth = require('../middleware/auth');
 // @access  Private (Admin only)
 router.get('/', [auth, auth.admin], async (req, res) => {
   try {
-    const users = await User.find().select('-password');
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] }
+    });
     res.json(users);
   } catch (err) {
     console.error(err.message);
@@ -21,7 +23,9 @@ router.get('/', [auth, auth.admin], async (req, res) => {
 // @access  Private (Admin only)
 router.get('/:id', [auth, auth.admin], async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
     
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
@@ -30,9 +34,6 @@ router.get('/:id', [auth, auth.admin], async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'User not found' });
-    }
     res.status(500).send('Server Error');
   }
 });
@@ -50,25 +51,23 @@ router.put('/:id', [auth, auth.admin], async (req, res) => {
   if (role) userFields.role = role;
 
   try {
-    let user = await User.findById(req.params.id);
+    let user = await User.findByPk(req.params.id);
 
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
     }
 
     // Update user
-    user = await User.findByIdAndUpdate(
-      req.params.id,
-      { $set: userFields },
-      { new: true }
-    ).select('-password');
+    await user.update(userFields);
+    
+    // Get updated user
+    const updatedUser = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
 
-    res.json(user);
+    res.json(updatedUser);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'User not found' });
-    }
     res.status(500).send('Server Error');
   }
 });
@@ -78,20 +77,17 @@ router.put('/:id', [auth, auth.admin], async (req, res) => {
 // @access  Private (Admin only)
 router.delete('/:id', [auth, auth.admin], async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findByPk(req.params.id);
 
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    await user.remove();
+    await user.destroy();
 
     res.json({ msg: 'User removed' });
   } catch (err) {
     console.error(err.message);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'User not found' });
-    }
     res.status(500).send('Server Error');
   }
 });

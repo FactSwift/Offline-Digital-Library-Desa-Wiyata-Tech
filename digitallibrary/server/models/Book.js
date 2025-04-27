@@ -1,54 +1,60 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const User = require('./User');
 
-const BookSchema = new mongoose.Schema({
+const Book = sequelize.define('Book', {
   title: {
-    type: String,
-    required: true,
-    trim: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   author: {
-    type: String,
-    required: true,
-    trim: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   description: {
-    type: String,
-    trim: true
+    type: DataTypes.TEXT
   },
   category: {
-    type: String,
-    trim: true
+    type: DataTypes.STRING
   },
   filePath: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   coverImage: {
-    type: String
+    type: DataTypes.STRING
   },
   uploadedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: User,
+      key: 'id'
+    }
   },
   uploadDate: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   ISBN: {
-    type: String,
-    trim: true
+    type: DataTypes.STRING
   },
   pageCount: {
-    type: Number
+    type: DataTypes.INTEGER
   },
   publisher: {
-    type: String,
-    trim: true
+    type: DataTypes.STRING
   },
   publicationYear: {
-    type: Number
+    type: DataTypes.INTEGER
   }
+}, {
+  timestamps: true,
+  createdAt: 'uploadDate',
+  updatedAt: 'lastUpdated'
 });
 
-module.exports = mongoose.model('Book', BookSchema); 
+// Define relationships
+Book.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+
+module.exports = Book; 

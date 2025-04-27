@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
+const { User } = require('../models');
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'offline_digital_library_secret';
 
-module.exports = function(req, res, next) {
+const auth = function(req, res, next) {
   // Get token from header
   const token = req.header('x-auth-token');
 
@@ -23,9 +24,19 @@ module.exports = function(req, res, next) {
 };
 
 // Middleware to check if user is admin
-module.exports.admin = function(req, res, next) {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ msg: 'Not authorized as admin' });
+auth.admin = async function(req, res, next) {
+  try {
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Not authorized as admin' });
+    }
+    
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Server error' });
   }
-  next();
-}; 
+};
+
+module.exports = auth; 
