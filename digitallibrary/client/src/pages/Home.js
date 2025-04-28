@@ -100,7 +100,7 @@ const Home = () => {
       ) : (
         <Row xs={1} md={2} lg={3} className="g-4">
           {filteredBooks.map(book => (
-            <Col key={book._id}>
+            <Col key={book.id}>
               <BookCard book={book} />
             </Col>
           ))}

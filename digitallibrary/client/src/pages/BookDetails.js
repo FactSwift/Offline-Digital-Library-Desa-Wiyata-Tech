@@ -64,7 +64,7 @@ const BookDetails = () => {
     );
   }
 
-  const defaultCover = 'https://via.placeholder.com/300x400?text=No+Cover';
+  const defaultCover = '/assets/placeholder.svg';
 
   return (
     <Container>
@@ -78,14 +78,14 @@ const BookDetails = () => {
           <Row>
             <Col md={4} className="text-center mb-4 mb-md-0">
               <img 
-                src={book.coverImage ? `http://localhost:5001${book.coverImage}` : defaultCover} 
+                src={book.coverImage ? book.coverImage : defaultCover} 
                 alt={book.title} 
                 className="book-cover img-fluid rounded shadow"
               />
               <div className="mt-4">
                 <Button 
                   as={Link} 
-                  to={`/read/${book._id}`} 
+                  to={`/read/${book.id}`} 
                   variant="primary" 
                   size="lg" 
                   className="w-100"

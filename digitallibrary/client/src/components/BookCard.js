@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 import { FaEye, FaInfoCircle } from 'react-icons/fa';
 
 const BookCard = ({ book }) => {
-  const defaultCover = 'https://via.placeholder.com/150x200?text=No+Cover';
+  const defaultCover = '/assets/placeholder.svg';
   
   return (
     <Card className="h-100 book-card">
       <Card.Img 
         variant="top" 
-        src={book.coverImage ? `http://localhost:5001${book.coverImage}` : defaultCover} 
+        src={book.coverImage ? book.coverImage : defaultCover} 
         alt={book.title}
       />
       <Card.Body className="d-flex flex-column">

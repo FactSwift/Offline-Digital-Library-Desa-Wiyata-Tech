@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Button, Spinner, Alert, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { FaArrowLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-
-// Set up react-pdf worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+import { Document, Page } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { FaArrowLeft, FaChevronLeft, FaChevronRight, FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
 
 const ReadBook = () => {
   const [book, setBook] = useState(null);
@@ -14,6 +13,7 @@ const ReadBook = () => {
   const [error, setError] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1);
   const { id } = useParams();
 
   useEffect(() => {
@@ -35,19 +35,46 @@ const ReadBook = () => {
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
+    setPageNumber(1);
   };
 
-  const goToPrevPage = () => {
+  const goToPrevPage = useCallback(() => {
     if (pageNumber > 1) {
       setPageNumber(pageNumber - 1);
     }
-  };
+  }, [pageNumber]);
 
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (pageNumber < numPages) {
       setPageNumber(pageNumber + 1);
     }
+  }, [pageNumber, numPages]);
+
+  const zoomIn = () => {
+    if (scale < 2.0) {
+      setScale(prevScale => prevScale + 0.1);
+    }
   };
+
+  const zoomOut = () => {
+    if (scale > 0.5) {
+      setScale(prevScale => prevScale - 0.1);
+    }
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') {
+        goToNextPage();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevPage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNextPage, goToPrevPage]);
 
   if (loading) {
     return (
@@ -98,39 +125,72 @@ const ReadBook = () => {
 
       <div className="pdf-container p-3">
         <Document
-          file={`http://localhost:5001${book.filePath}`}
+          file={book.filePath}
           onLoadSuccess={onDocumentLoadSuccess}
           loading={<Spinner animation="border" />}
-          error={<Alert variant="danger">Failed to load PDF. Please try again later.</Alert>}
+          error={
+            <Alert variant="danger" className="text-center p-4">
+              Failed to load PDF viewer. Please try again later.
+            </Alert>
+          }
           className="d-flex justify-content-center"
+          options={{
+            cMapUrl: '/pdf-worker/cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: '/pdf-worker/standard_fonts/'
+          }}
         >
           <Page 
-            pageNumber={pageNumber} 
-            renderTextLayer={false}
+            pageNumber={pageNumber}
+            scale={scale}
             width={window.innerWidth > 768 ? 800 : window.innerWidth - 50}
           />
         </Document>
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mt-3">
-        <Button 
-          onClick={goToPrevPage} 
-          disabled={pageNumber <= 1}
-          variant="outline-primary"
-        >
-          <FaChevronLeft className="me-1" /> Previous
-        </Button>
-        <p className="mb-0">
-          Page {pageNumber} of {numPages}
-        </p>
-        <Button 
-          onClick={goToNextPage} 
-          disabled={pageNumber >= numPages}
-          variant="outline-primary"
-        >
-          Next <FaChevronRight className="ms-1" />
-        </Button>
-      </div>
+      <Row className="mt-3 align-items-center">
+        <Col xs={12} md={4} className="d-flex justify-content-start mb-3 mb-md-0">
+          <Button 
+            onClick={goToPrevPage} 
+            disabled={pageNumber <= 1}
+            variant="outline-primary"
+            className="me-2"
+          >
+            <FaChevronLeft className="me-1" /> Previous
+          </Button>
+          <Button 
+            onClick={goToNextPage} 
+            disabled={pageNumber >= numPages}
+            variant="outline-primary"
+          >
+            Next <FaChevronRight className="ms-1" />
+          </Button>
+        </Col>
+        
+        <Col xs={12} md={4} className="text-center mb-3 mb-md-0">
+          <p className="mb-0">
+            Page {pageNumber} of {numPages || '-'}
+          </p>
+        </Col>
+        
+        <Col xs={12} md={4} className="d-flex justify-content-end">
+          <Button 
+            onClick={zoomOut} 
+            disabled={scale <= 0.5}
+            variant="outline-secondary"
+            className="me-2"
+          >
+            <FaSearchMinus />
+          </Button>
+          <Button 
+            onClick={zoomIn} 
+            disabled={scale >= 2.0}
+            variant="outline-secondary"
+          >
+            <FaSearchPlus />
+          </Button>
+        </Col>
+      </Row>
     </Container>
   );
 };

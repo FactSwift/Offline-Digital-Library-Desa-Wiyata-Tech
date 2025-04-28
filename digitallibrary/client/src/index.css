@@ -38,6 +38,22 @@ code {
   margin-bottom: 20px;
   background-color: #f0f0f0;
   border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.pdf-container .react-pdf__Document {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pdf-container .react-pdf__Page {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  margin-bottom: 10px;
+  background-color: white;
 }
 
 .login-container, .register-container {
