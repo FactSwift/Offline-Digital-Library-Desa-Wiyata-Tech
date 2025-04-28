@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Button, Spinner, Alert, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
@@ -14,7 +14,15 @@ const ReadBook = () => {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1);
+  const [isZooming, setIsZooming] = useState(false);
   const { id } = useParams();
+
+  // Memoize PDF options to prevent unnecessary rerenders
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: '/pdf-worker/cmaps/',
+    cMapPacked: true,
+    standardFontDataUrl: '/pdf-worker/standard_fonts/'
+  }), []);
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -50,19 +58,22 @@ const ReadBook = () => {
     }
   }, [pageNumber, numPages]);
 
-  const zoomIn = () => {
-    if (scale < 2.0) {
+  const zoomIn = useCallback(() => {
+    if (scale < 2.0 && !isZooming) {
+      setIsZooming(true);
       setScale(prevScale => prevScale + 0.1);
+      setTimeout(() => setIsZooming(false), 300);
     }
-  };
+  }, [scale, isZooming]);
 
-  const zoomOut = () => {
-    if (scale > 0.5) {
+  const zoomOut = useCallback(() => {
+    if (scale > 0.5 && !isZooming) {
+      setIsZooming(true);
       setScale(prevScale => prevScale - 0.1);
+      setTimeout(() => setIsZooming(false), 300);
     }
-  };
+  }, [scale, isZooming]);
 
-  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowRight') {
@@ -75,6 +86,10 @@ const ReadBook = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToNextPage, goToPrevPage]);
+
+  const onError = useCallback((error) => {
+    console.error('PDF error:', error);
+  }, []);
 
   if (loading) {
     return (
@@ -127,6 +142,7 @@ const ReadBook = () => {
         <Document
           file={book.filePath}
           onLoadSuccess={onDocumentLoadSuccess}
+          onError={onError}
           loading={<Spinner animation="border" />}
           error={
             <Alert variant="danger" className="text-center p-4">
@@ -134,16 +150,17 @@ const ReadBook = () => {
             </Alert>
           }
           className="d-flex justify-content-center"
-          options={{
-            cMapUrl: '/pdf-worker/cmaps/',
-            cMapPacked: true,
-            standardFontDataUrl: '/pdf-worker/standard_fonts/'
-          }}
+          options={pdfOptions}
         >
           <Page 
             pageNumber={pageNumber}
             scale={scale}
             width={window.innerWidth > 768 ? 800 : window.innerWidth - 50}
+            error={
+              <Alert variant="warning" className="text-center p-2">
+                Error rendering this page. Try zooming out.
+              </Alert>
+            }
           />
         </Document>
       </div>
@@ -176,7 +193,7 @@ const ReadBook = () => {
         <Col xs={12} md={4} className="d-flex justify-content-end">
           <Button 
             onClick={zoomOut} 
-            disabled={scale <= 0.5}
+            disabled={scale <= 0.5 || isZooming}
             variant="outline-secondary"
             className="me-2"
           >
@@ -184,7 +201,7 @@ const ReadBook = () => {
           </Button>
           <Button 
             onClick={zoomIn} 
-            disabled={scale >= 2.0}
+            disabled={scale >= 2.0 || isZooming}
             variant="outline-secondary"
           >
             <FaSearchPlus />
