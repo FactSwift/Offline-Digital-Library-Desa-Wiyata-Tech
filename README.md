@@ -26,6 +26,9 @@ A JavaScript-based offline digital library application with local server capabil
 - npm or yarn
 
 ## Installation
+⚠️*Notes!
+- run your mysql first!
+- run npm install on both client and server folder.
 
 ### 1. Clone the repository and navigate to the project directory
 
@@ -49,22 +52,22 @@ npm install
 ```
 ### 4. open server/config/config.js
 # Server Configuration
-PORT=5001
+PORT=5001\
 NODE_ENV=development
 
 # MySQL Database Configuration
-DB_HOST=localhost
-DB_PORT=3307
-DB_USER=your_mysql_username
-DB_PASSWORD=your_mysql_password
+DB_HOST=localhost\
+DB_PORT=3307\
+DB_USER=your_mysql_username\
+DB_PASSWORD=your_mysql_password\
 DB_NAME=digital_library
 
 # Security
-JWT_SECRET=your_secret_key_here  # Generate a strong random string
+JWT_SECRET=your_secret_key_here  # Generate a strong random string\
 JWT_EXPIRES_IN=24h
 
 # File Storage
-UPLOAD_DIR=uploads
+UPLOAD_DIR=uploads\
 ALLOWED_FILE_TYPES=pdf,doc,docx
 ```
 
