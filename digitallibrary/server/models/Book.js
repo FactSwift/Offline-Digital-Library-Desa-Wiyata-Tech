@@ -51,10 +51,9 @@ const Book = sequelize.define('Book', {
 }, {
   timestamps: true,
   createdAt: 'uploadDate',
-  updatedAt: 'lastUpdated'
+  updatedAt: 'updatedAt'
 });
 
-// Define relationships
-Book.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploader' });
+// Removed duplicate association - this is defined in index.js
 
 module.exports = Book; 

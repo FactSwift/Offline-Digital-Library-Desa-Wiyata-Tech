@@ -15,7 +15,7 @@ const userRoutes = require('./routes/users');
 
 // Initialize express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Create uploads directory if it doesn't exist
 const uploadDir = process.env.UPLOAD_DIR || 'uploads';
