@@ -98,7 +98,7 @@ const ReadBook = () => {
 
       <div className="pdf-container p-3">
         <Document
-          file={`http://localhost:5000${book.filePath}`}
+          file={`http://localhost:5001${book.filePath}`}
           onLoadSuccess={onDocumentLoadSuccess}
           loading={<Spinner animation="border" />}
           error={<Alert variant="danger">Failed to load PDF. Please try again later.</Alert>}

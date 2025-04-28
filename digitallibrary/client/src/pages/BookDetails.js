@@ -78,7 +78,7 @@ const BookDetails = () => {
           <Row>
             <Col md={4} className="text-center mb-4 mb-md-0">
               <img 
-                src={book.coverImage ? `http://localhost:5000${book.coverImage}` : defaultCover} 
+                src={book.coverImage ? `http://localhost:5001${book.coverImage}` : defaultCover} 
                 alt={book.title} 
                 className="book-cover img-fluid rounded shadow"
               />
