@@ -1,0 +1,36 @@
+const { Sequelize } = require('sequelize');
+const config = require('./config');
+
+// Create Sequelize instance
+const sequelize = new Sequelize(
+  config.DB_NAME,
+  config.DB_USER,
+  config.DB_PASSWORD,
+  {
+    host: config.DB_HOST || 'localhost',
+    port: config.DB_PORT || 3307,
+    dialect: 'mysql',
+    logging: config.NODE_ENV === 'development' ? console.log : false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
+
+// Test database connection
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+    process.exit(1);
+  }
+};
+
+testConnection();
+
+module.exports = sequelize; 
