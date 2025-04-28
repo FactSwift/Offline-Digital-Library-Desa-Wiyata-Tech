@@ -10,7 +10,7 @@ const BookCard = ({ book }) => {
     <Card className="h-100 book-card">
       <Card.Img 
         variant="top" 
-        src={book.coverImage ? `http://localhost:5000${book.coverImage}` : defaultCover} 
+        src={book.coverImage ? `http://localhost:5001${book.coverImage}` : defaultCover} 
         alt={book.title}
       />
       <Card.Body className="d-flex flex-column">
